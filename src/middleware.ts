@@ -12,14 +12,17 @@ import { NextResponse } from "next/server";
 //   matcher: "/about/:path*",
 // };
 
-export function middleware(request: NextRequest): NextResponse<unknown> {
+export async function middleware(
+  request: NextRequest,
+  // event: NextFetchEvent,
+): Promise<NextResponse<unknown>> {
   console.log(request.nextUrl.href);
   const token = process.env.token;
 
   console.log(Object.fromEntries(request.headers));
   const requestHeaders = new Headers(request.headers);
   requestHeaders.append(
-    "x-Forwarded-nextjs",
+    "Forwarded",
     `by=${request.nextUrl.host}; for=${
       request.headers.get("x-forwarded-for")
     }; host=${request.nextUrl.host}; proto=${
@@ -40,10 +43,20 @@ export function middleware(request: NextRequest): NextResponse<unknown> {
     // url.hostname = hostname;
     // url.port = String(443);
     //   url.pathname = url.pathname; //.replace(/^\//, '');
-
-    return NextResponse.rewrite(url, {
+    const response = await fetch(url, {
       headers: requestHeaders,
+      method: request.method,
+      body: request.body,
     });
+
+    return new NextResponse(response.body, {
+      headers: response.headers,
+      status: response.status,
+    });
+
+    // return NextResponse.rewrite(url, {
+    //   headers: requestHeaders,
+    // });
   }
   if (request.nextUrl.pathname.startsWith("/token/" + token + "/https/")) {
     let url = new URL(
@@ -59,8 +72,18 @@ export function middleware(request: NextRequest): NextResponse<unknown> {
     // url.port = String(443);
     //   url.pathname = url.pathname; //.replace(/^\//, '');
 
-    return NextResponse.rewrite(url, {
+    // return NextResponse.rewrite(url, {
+    //   headers: requestHeaders,
+    // });
+    const response = await fetch(url, {
       headers: requestHeaders,
+      method: request.method,
+      body: request.body,
+    });
+
+    return new NextResponse(response.body, {
+      headers: response.headers,
+      status: response.status,
     });
   }
   return NextResponse.next();
