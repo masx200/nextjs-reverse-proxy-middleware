@@ -15,10 +15,14 @@ import { NextResponse } from "next/server";
 export function middleware(request: NextRequest): NextResponse<unknown> {
   console.log(request.nextUrl.href);
   const token = process.env.token;
+
+  console.log(Object.fromEntries(request.headers));
   const requestHeaders = new Headers(request.headers);
   requestHeaders.append(
     "Forwarded",
-    `by=${request.nextUrl.host}; for=${request.ip}; host=${request.nextUrl.host}; proto=${
+    `by=${request.nextUrl.host}; for=${
+      request.headers.get("x-forwarded-for")
+    }; host=${request.nextUrl.host}; proto=${
       request.nextUrl.href.startsWith("https://") ? "https" : "http"
     }`,
   );
