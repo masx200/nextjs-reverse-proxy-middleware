@@ -13,7 +13,15 @@ import { NextResponse } from "next/server";
 // };
 
 export function middleware(request: NextRequest): NextResponse<unknown> {
+  console.log(request.nextUrl.href);
   const token = process.env.token;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.append(
+    "Forwarded",
+    `by=${request.nextUrl.host}; for=${request.ip}; host=${request.nextUrl.host}; proto=${
+      request.nextUrl.href.startsWith("https://") ? "https" : "http"
+    }`,
+  );
   if (request.nextUrl.pathname.startsWith("/token/" + token + "/http/")) {
     // const hostname = "dash.deno.com"; // or 'eu.posthog.com'
     let url = new URL(
@@ -21,7 +29,7 @@ export function middleware(request: NextRequest): NextResponse<unknown> {
         request.nextUrl.pathname.slice(6 + ("/token/" + token).length),
     );
     console.log(url.href);
-    const requestHeaders = new Headers(request.headers);
+    // const requestHeaders = new Headers(request.headers);
     requestHeaders.set("host", url.hostname);
 
     // url.protocol = "https";
@@ -39,7 +47,7 @@ export function middleware(request: NextRequest): NextResponse<unknown> {
         request.nextUrl.pathname.slice(6 + 1 + ("/token/" + token).length),
     );
     console.log(url.href);
-    const requestHeaders = new Headers(request.headers);
+
     requestHeaders.set("host", url.hostname);
 
     // url.protocol = "https";
