@@ -19,7 +19,7 @@ export function middleware(request: NextRequest): NextResponse<unknown> {
   console.log(Object.fromEntries(request.headers));
   const requestHeaders = new Headers(request.headers);
   requestHeaders.append(
-    "Forwarded",
+    "x-Forwarded-nextjs",
     `by=${request.nextUrl.host}; for=${
       request.headers.get("x-forwarded-for")
     }; host=${request.nextUrl.host}; proto=${
