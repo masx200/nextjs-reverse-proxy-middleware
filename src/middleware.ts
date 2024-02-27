@@ -13,9 +13,13 @@ import { NextResponse } from "next/server";
 // };
 
 export function middleware(request: NextRequest): NextResponse<unknown> {
-  if (request.nextUrl.pathname.startsWith("/http/")) {
+  const token = process.env.token;
+  if (request.nextUrl.pathname.startsWith("/token/" + token + "/http/")) {
     // const hostname = "dash.deno.com"; // or 'eu.posthog.com'
-    let url = new URL("http://" + request.nextUrl.pathname.slice(6));
+    let url = new URL(
+      "http://" +
+        request.nextUrl.pathname.slice(6 + ("/token/" + token).length),
+    );
     console.log(url.href);
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("host", url.hostname);
@@ -29,8 +33,11 @@ export function middleware(request: NextRequest): NextResponse<unknown> {
       headers: requestHeaders,
     });
   }
-  if (request.nextUrl.pathname.startsWith("/https/")) {
-    let url = new URL("https://" + request.nextUrl.pathname.slice(6 + 1));
+  if (request.nextUrl.pathname.startsWith("/token/" + token + "/https/")) {
+    let url = new URL(
+      "https://" +
+        request.nextUrl.pathname.slice(6 + 1 + ("/token/" + token).length),
+    );
     console.log(url.href);
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("host", url.hostname);
