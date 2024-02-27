@@ -43,20 +43,7 @@ export async function middleware(
     // url.hostname = hostname;
     // url.port = String(443);
     //   url.pathname = url.pathname; //.replace(/^\//, '');
-    const response = await fetch(url, {
-      headers: requestHeaders,
-      method: request.method,
-      body: request.body,
-    });
-
-    return new NextResponse(response.body, {
-      headers: response.headers,
-      status: response.status,
-    });
-
-    // return NextResponse.rewrite(url, {
-    //   headers: requestHeaders,
-    // });
+    return await reverse_proxy(url, requestHeaders, request);
   }
   if (request.nextUrl.pathname.startsWith("/token/" + token + "/https/")) {
     let url = new URL(
@@ -75,6 +62,20 @@ export async function middleware(
     // return NextResponse.rewrite(url, {
     //   headers: requestHeaders,
     // });
+    return await reverse_proxy(url, requestHeaders, request);
+  }
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: "/:path*",
+};
+async function reverse_proxy(
+  url: URL,
+  requestHeaders: Headers,
+  request: NextRequest,
+) {
+  try {
     const response = await fetch(url, {
       headers: requestHeaders,
       method: request.method,
@@ -85,10 +86,10 @@ export async function middleware(
       headers: response.headers,
       status: response.status,
     });
+  } catch (error) {
+    console.error(error);
+    return new NextResponse("bad gateway" + "\n" + String(error), {
+      status: 502,
+    });
   }
-  return NextResponse.next();
 }
-
-export const config = {
-  matcher: "/:path*",
-};
