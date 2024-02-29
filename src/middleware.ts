@@ -19,7 +19,7 @@ export async function middleware(
   console.log({ url: request.nextUrl.href, method: request.method });
   const token = process.env.token;
 
-  console.log(Object.fromEntries(request.headers));
+  console.log({ headers: Object.fromEntries(request.headers) });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.append(
     "Forwarded",
