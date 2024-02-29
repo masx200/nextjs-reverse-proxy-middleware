@@ -31,7 +31,7 @@ export async function middleware(
   );
   if (request.nextUrl.pathname.startsWith("/token/" + token + "/http/")) {
     // const hostname = "dash.deno.com"; // or 'eu.posthog.com'
-    let url = new URL(
+    const url = new URL(
       "http://" +
         request.nextUrl.pathname.slice(6 + ("/token/" + token).length),
     );
@@ -47,7 +47,7 @@ export async function middleware(
     return await reverse_proxy(url, requestHeaders, request);
   }
   if (request.nextUrl.pathname.startsWith("/token/" + token + "/https/")) {
-    let url = new URL(
+    const url = new URL(
       "https://" +
         request.nextUrl.pathname.slice(6 + 1 + ("/token/" + token).length),
     );
