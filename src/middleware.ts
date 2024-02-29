@@ -1,5 +1,5 @@
 // import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 // This function can be marked `async` if using `await` inside
@@ -14,7 +14,7 @@ import { NextResponse } from "next/server";
 
 export async function middleware(
   request: NextRequest,
-  // event: NextFetchEvent,
+  event: NextFetchEvent,
 ): Promise<NextResponse<unknown>> {
   console.log({ url: request.nextUrl.href, method: request.method });
   const token = process.env.token;
