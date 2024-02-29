@@ -80,6 +80,8 @@ async function reverse_proxy(
       headers: requestHeaders,
       method: request.method,
       body: request.body,
+      /* 关闭重定向 */
+      redirect: "manual",
     });
 
     return new NextResponse(response.body, {
