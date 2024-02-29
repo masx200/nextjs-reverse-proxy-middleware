@@ -35,6 +35,7 @@ export async function middleware(
       "http://" +
         request.nextUrl.pathname.slice(6 + ("/token/" + token).length),
     );
+    url.search = request.nextUrl.search;
     console.log(url.href);
     // const requestHeaders = new Headers(request.headers);
     requestHeaders.set("host", url.hostname);
@@ -50,6 +51,8 @@ export async function middleware(
       "https://" +
         request.nextUrl.pathname.slice(6 + 1 + ("/token/" + token).length),
     );
+    /* 添加search */
+    url.search = request.nextUrl.search;
     console.log(url.href);
 
     requestHeaders.set("host", url.hostname);
