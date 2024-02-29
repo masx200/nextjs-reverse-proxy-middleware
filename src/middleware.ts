@@ -77,7 +77,7 @@ async function reverse_proxy(
   url: URL,
   requestHeaders: Headers,
   request: NextRequest,
-) {
+): Promise<NextResponse<unknown>> {
   try {
     const response = await fetch(url, {
       headers: requestHeaders,
