@@ -16,7 +16,7 @@ export async function middleware(
   request: NextRequest,
   // event: NextFetchEvent,
 ): Promise<NextResponse<unknown>> {
-  console.log(request.nextUrl.href);
+  console.log({ url: request.nextUrl.href, method: request.method });
   const token = process.env.token;
 
   console.log(Object.fromEntries(request.headers));
@@ -36,7 +36,7 @@ export async function middleware(
         request.nextUrl.pathname.slice(6 + ("/token/" + token).length),
     );
     url.search = request.nextUrl.search;
-    console.log(url.href);
+    console.log({ url: url.href, method: request.method });
     // const requestHeaders = new Headers(request.headers);
     requestHeaders.set("host", url.hostname);
 
@@ -53,7 +53,7 @@ export async function middleware(
     );
     /* 添加search */
     url.search = request.nextUrl.search;
-    console.log(url.href);
+    console.log({ url: url.href, method: request.method });
 
     requestHeaders.set("host", url.hostname);
 
