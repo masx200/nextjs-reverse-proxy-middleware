@@ -16,6 +16,7 @@ export async function middleware(
   request: NextRequest,
   event: NextFetchEvent,
 ): Promise<NextResponse<unknown>> {
+  const nextUrl = new URL(request.url);
   console.log({ url: request.nextUrl.href, method: request.method });
   const token = process.env.token;
 
@@ -31,11 +32,18 @@ export async function middleware(
   );
   if (request.nextUrl.pathname.startsWith("/token/" + token + "/http/")) {
     // const hostname = "dash.deno.com"; // or 'eu.posthog.com'
-    const url = new URL(
+    let url = new URL(
       "http://" +
         request.nextUrl.pathname.slice(6 + ("/token/" + token).length),
     );
     url.search = request.nextUrl.search;
+    while (url.pathname.startsWith("/token/" + token + "/http/")) {
+      url = new URL(
+        "http://" +
+          url.pathname.slice(6 + ("/token/" + token).length),
+      );
+      url.search = nextUrl.search;
+    }
     console.log({ url: url.href, method: request.method });
     // const requestHeaders = new Headers(request.headers);
     requestHeaders.set("host", url.hostname);
@@ -47,12 +55,23 @@ export async function middleware(
     return await reverse_proxy(url, requestHeaders, request);
   }
   if (request.nextUrl.pathname.startsWith("/token/" + token + "/https/")) {
-    const url = new URL(
+    let url = new URL(
       "https://" +
         request.nextUrl.pathname.slice(6 + 1 + ("/token/" + token).length),
     );
     /* 添加search */
     url.search = request.nextUrl.search;
+    /* 循环处理多重前缀 */
+    while (url.pathname.startsWith("/token/" + token + "/https/")) {
+      url = new URL(
+        "https://" +
+          url.pathname.slice(
+            6 + 1 + ("/token/" + token).length,
+          ),
+      );
+      /* 添加search */
+      url.search = nextUrl.search;
+    }
     console.log({ url: url.href, method: request.method });
 
     requestHeaders.set("host", url.hostname);
