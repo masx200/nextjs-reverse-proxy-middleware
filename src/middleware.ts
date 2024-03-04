@@ -1,6 +1,7 @@
 // import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { NextMiddleWare } from "./NextMiddleWare";
 
 // This function can be marked `async` if using `await` inside
 // export function middleware(request: NextRequest) {
@@ -12,7 +13,7 @@ import { NextResponse } from "next/server";
 //   matcher: "/about/:path*",
 // };
 
-export async function middleware(
+export async function middlewareMain(
   request: NextRequest,
   event: NextFetchEvent,
 ): Promise<NextResponse<unknown>> {
@@ -88,11 +89,20 @@ export async function middleware(
   }
   return NextResponse.next();
 }
-
+export async function middleware(
+  request: NextRequest,
+  event: NextFetchEvent,
+): Promise<NextResponse<unknown>> {
+  return await middlewareLogger(
+    request,
+    event,
+    () => middlewareMain(request, event),
+  );
+}
 export const config = {
   matcher: "/:path*",
 };
-async function reverse_proxy(
+export async function reverse_proxy(
   url: URL,
   requestHeaders: Headers,
   request: NextRequest,
@@ -116,4 +126,41 @@ async function reverse_proxy(
       status: 502,
     });
   }
+}
+export async function middlewareLogger(
+  ...[request, _info, next]: Parameters<NextMiddleWare>
+): Promise<NextResponse> {
+  console.log(
+    JSON.stringify(
+      {
+        // ...info,
+        request: {
+          method: request.method,
+          url: request.url,
+          headers: Object.fromEntries(request.headers),
+        },
+      },
+      null,
+      4,
+    ),
+  );
+  const resp = await next();
+  console.log(
+    JSON.stringify(
+      {
+        response: {
+          headers: Object.fromEntries(resp.headers),
+          status: resp.status,
+        },
+        request: {
+          method: request.method,
+          url: request.url,
+          headers: Object.fromEntries(request.headers),
+        },
+      },
+      null,
+      4,
+    ),
+  );
+  return resp;
 }
