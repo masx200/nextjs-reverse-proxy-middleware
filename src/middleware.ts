@@ -12,7 +12,13 @@ import { NextMiddleWare } from "./NextMiddleWare";
 // export const config = {
 //   matcher: "/about/:path*",
 // };
-
+/**
+ * 主要中间件函数，用于处理请求并根据路径进行反向代理。
+ *
+ * @param request NextRequest对象，包含请求信息。
+ * @param event NextFetchEvent对象，包含触发请求的事件信息。
+ * @returns 返回一个Promise，解析为NextResponse对象，该对象包含处理后的响应数据。
+ */
 export async function middlewareMain(
   request: NextRequest,
   event: NextFetchEvent,
@@ -113,7 +119,10 @@ export async function reverse_proxy(
       method: request.method,
       body: request.body,
       /* 关闭重定向 */
-      redirect: "manual",
+      /* 可以设定请求头中的字段"x-proxy-redirect"为"error" | "follow" |
+"manual"来设定代理行为的重定向方式. */
+      redirect: (requestHeaders.get("x-proxy-redirect") ??
+        "manual") as RequestRedirect,
     });
 
     return new NextResponse(response.body, {

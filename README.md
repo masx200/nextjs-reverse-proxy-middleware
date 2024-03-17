@@ -66,3 +66,6 @@ http://localhost:3000/token/token123456/https/www.360.cn
 ```
 http://localhost:3000/token/token123456/http/example.com
 ```
+
+可以设定请求头中的字段"x-proxy-redirect"为"error" | "follow" |
+"manual"来设定代理行为的重定向方式.
