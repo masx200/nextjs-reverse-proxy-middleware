@@ -102,7 +102,11 @@ export async function middleware(
   return await middlewareLogger(
     request,
     event,
-    () => middlewareMain(request, event),
+    async () => {
+      return await Strict_Transport_Security(request, event, async () => {
+        return await middlewareMain(request, event);
+      });
+    },
   );
 }
 export const config = {
@@ -172,4 +176,27 @@ export async function middlewareLogger(
     ),
   );
   return resp;
+}
+export async function Strict_Transport_Security(
+  ...[_request, _info, next]: Parameters<NextMiddleWare>
+): Promise<NextResponse> {
+  // console.log(2);
+  const response = await next();
+  const headers = new Headers(response.headers);
+
+  headers.set("Strict-Transport-Security", "max-age=31536000");
+  // console.log(ctx.response.body);
+  // 必须把响应的主体转换为Uint8Array才行
+  const body = response.body && (await bodyToBuffer(response.body));
+  // headers.delete("content-length");
+  const res = new NextResponse(body, {
+    status: response.status,
+    headers,
+  });
+  return res;
+}
+export async function bodyToBuffer(
+  body?: BodyInit | null,
+): Promise<Uint8Array> {
+  return new Uint8Array(await new Response(body).arrayBuffer());
 }
