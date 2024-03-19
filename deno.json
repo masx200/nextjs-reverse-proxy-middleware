@@ -1,0 +1,10 @@
+{
+    "fmt": {
+        "indentWidth": 4,
+        "singleQuote": false,
+        "exclude": [
+            "node_modules",
+            ".next"
+        ]
+    }
+}

@@ -20,183 +20,185 @@ import { NextMiddleWare } from "./NextMiddleWare";
  * @returns 返回一个Promise，解析为NextResponse对象，该对象包含处理后的响应数据。
  */
 export async function middlewareMain(
-  request: NextRequest,
-  event: NextFetchEvent,
+    request: NextRequest,
+    event: NextFetchEvent,
 ): Promise<NextResponse<unknown>> {
-  const nextUrl = new URL(request.url);
-  console.log({ url: request.nextUrl.href, method: request.method });
-  const token = process.env.token;
+    const nextUrl = new URL(request.url);
+    console.log({ url: request.nextUrl.href, method: request.method });
+    const token = process.env.token;
 
-  console.log({ headers: Object.fromEntries(request.headers) });
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.append(
-    "Forwarded",
-    `by=${request.nextUrl.host}; for=${
-      request.headers.get("x-forwarded-for")
-    }; host=${request.nextUrl.host}; proto=${
-      request.nextUrl.href.startsWith("https://") ? "https" : "http"
-    }`,
-  );
-  if (request.nextUrl.pathname.startsWith("/token/" + token + "/http/")) {
-    // const hostname = "dash.deno.com"; // or 'eu.posthog.com'
-    let url = new URL(
-      "http://" +
-        request.nextUrl.pathname.slice(6 + ("/token/" + token).length),
+    console.log({ headers: Object.fromEntries(request.headers) });
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.append(
+        "Forwarded",
+        `by=${request.nextUrl.host}; for=${
+            request.headers.get("x-forwarded-for")
+        }; host=${request.nextUrl.host}; proto=${
+            request.nextUrl.href.startsWith("https://") ? "https" : "http"
+        }`,
     );
-    url.search = request.nextUrl.search;
-    while (url.pathname.startsWith("/token/" + token + "/http/")) {
-      url = new URL(
-        "http://" +
-          url.pathname.slice(6 + ("/token/" + token).length),
-      );
-      url.search = nextUrl.search;
+    if (request.nextUrl.pathname.startsWith("/token/" + token + "/http/")) {
+        // const hostname = "dash.deno.com"; // or 'eu.posthog.com'
+        let url = new URL(
+            "http://" +
+                request.nextUrl.pathname.slice(6 + ("/token/" + token).length),
+        );
+        url.search = request.nextUrl.search;
+        while (url.pathname.startsWith("/token/" + token + "/http/")) {
+            url = new URL(
+                "http://" +
+                    url.pathname.slice(6 + ("/token/" + token).length),
+            );
+            url.search = nextUrl.search;
+        }
+        console.log({ url: url.href, method: request.method });
+        // const requestHeaders = new Headers(request.headers);
+        requestHeaders.set("host", url.hostname);
+
+        // url.protocol = "https";
+        // url.hostname = hostname;
+        // url.port = String(443);
+        //   url.pathname = url.pathname; //.replace(/^\//, '');
+        return await reverse_proxy(url, requestHeaders, request);
     }
-    console.log({ url: url.href, method: request.method });
-    // const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("host", url.hostname);
+    if (request.nextUrl.pathname.startsWith("/token/" + token + "/https/")) {
+        let url = new URL(
+            "https://" +
+                request.nextUrl.pathname.slice(
+                    6 + 1 + ("/token/" + token).length,
+                ),
+        );
+        /* 添加search */
+        url.search = request.nextUrl.search;
+        /* 循环处理多重前缀 */
+        while (url.pathname.startsWith("/token/" + token + "/https/")) {
+            url = new URL(
+                "https://" +
+                    url.pathname.slice(
+                        6 + 1 + ("/token/" + token).length,
+                    ),
+            );
+            /* 添加search */
+            url.search = nextUrl.search;
+        }
+        console.log({ url: url.href, method: request.method });
 
-    // url.protocol = "https";
-    // url.hostname = hostname;
-    // url.port = String(443);
-    //   url.pathname = url.pathname; //.replace(/^\//, '');
-    return await reverse_proxy(url, requestHeaders, request);
-  }
-  if (request.nextUrl.pathname.startsWith("/token/" + token + "/https/")) {
-    let url = new URL(
-      "https://" +
-        request.nextUrl.pathname.slice(6 + 1 + ("/token/" + token).length),
-    );
-    /* 添加search */
-    url.search = request.nextUrl.search;
-    /* 循环处理多重前缀 */
-    while (url.pathname.startsWith("/token/" + token + "/https/")) {
-      url = new URL(
-        "https://" +
-          url.pathname.slice(
-            6 + 1 + ("/token/" + token).length,
-          ),
-      );
-      /* 添加search */
-      url.search = nextUrl.search;
+        requestHeaders.set("host", url.hostname);
+
+        // url.protocol = "https";
+        // url.hostname = hostname;
+        // url.port = String(443);
+        //   url.pathname = url.pathname; //.replace(/^\//, '');
+
+        // return NextResponse.rewrite(url, {
+        //   headers: requestHeaders,
+        // });
+        return await reverse_proxy(url, requestHeaders, request);
     }
-    console.log({ url: url.href, method: request.method });
-
-    requestHeaders.set("host", url.hostname);
-
-    // url.protocol = "https";
-    // url.hostname = hostname;
-    // url.port = String(443);
-    //   url.pathname = url.pathname; //.replace(/^\//, '');
-
-    // return NextResponse.rewrite(url, {
-    //   headers: requestHeaders,
-    // });
-    return await reverse_proxy(url, requestHeaders, request);
-  }
-  return NextResponse.next();
+    return NextResponse.next();
 }
 export async function middleware(
-  request: NextRequest,
-  event: NextFetchEvent,
+    request: NextRequest,
+    event: NextFetchEvent,
 ): Promise<NextResponse<unknown>> {
-  return await middlewareLogger(
-    request,
-    event,
-    async () => {
-      return await Strict_Transport_Security(request, event, async () => {
-        return await middlewareMain(request, event);
-      });
-    },
-  );
+    return await middlewareLogger(
+        request,
+        event,
+        async () => {
+            return await Strict_Transport_Security(request, event, async () => {
+                return await middlewareMain(request, event);
+            });
+        },
+    );
 }
 export const config = {
-  matcher: "/:path*",
+    matcher: "/:path*",
 };
 export async function reverse_proxy(
-  url: URL,
-  requestHeaders: Headers,
-  request: NextRequest,
+    url: URL,
+    requestHeaders: Headers,
+    request: NextRequest,
 ): Promise<NextResponse<unknown>> {
-  try {
-    const response = await fetch(url, {
-      headers: requestHeaders,
-      method: request.method,
-      body: request.body,
-      /* 关闭重定向 */
-      /* 可以设定请求头中的字段"x-proxy-redirect"为"error" | "follow" |
+    try {
+        const response = await fetch(url, {
+            headers: requestHeaders,
+            method: request.method,
+            body: request.body,
+            /* 关闭重定向 */
+            /* 可以设定请求头中的字段"x-proxy-redirect"为"error" | "follow" |
 "manual"来设定代理行为的重定向方式. */
-      redirect: (requestHeaders.get("x-proxy-redirect") ??
-        "manual") as RequestRedirect,
-    });
+            redirect: (requestHeaders.get("x-proxy-redirect") ??
+                "manual") as RequestRedirect,
+        });
 
-    return new NextResponse(response.body, {
-      headers: response.headers,
-      status: response.status,
-    });
-  } catch (error) {
-    console.error(error);
-    return new NextResponse("bad gateway" + "\n" + String(error), {
-      status: 502,
-    });
-  }
+        return new NextResponse(response.body, {
+            headers: response.headers,
+            status: response.status,
+        });
+    } catch (error) {
+        console.error(error);
+        return new NextResponse("bad gateway" + "\n" + String(error), {
+            status: 502,
+        });
+    }
 }
 export async function middlewareLogger(
-  ...[request, _info, next]: Parameters<NextMiddleWare>
+    ...[request, _info, next]: Parameters<NextMiddleWare>
 ): Promise<NextResponse> {
-  console.log(
-    JSON.stringify(
-      {
-        // ...info,
-        request: {
-          method: request.method,
-          url: request.url,
-          headers: Object.fromEntries(request.headers),
-        },
-      },
-      null,
-      4,
-    ),
-  );
-  const resp = await next();
-  console.log(
-    JSON.stringify(
-      {
-        response: {
-          headers: Object.fromEntries(resp.headers),
-          status: resp.status,
-        },
-        request: {
-          method: request.method,
-          url: request.url,
-          headers: Object.fromEntries(request.headers),
-        },
-      },
-      null,
-      4,
-    ),
-  );
-  return resp;
+    console.log(
+        JSON.stringify(
+            {
+                // ...info,
+                request: {
+                    method: request.method,
+                    url: request.url,
+                    headers: Object.fromEntries(request.headers),
+                },
+            },
+            null,
+            4,
+        ),
+    );
+    const resp = await next();
+    console.log(
+        JSON.stringify(
+            {
+                response: {
+                    headers: Object.fromEntries(resp.headers),
+                    status: resp.status,
+                },
+                request: {
+                    method: request.method,
+                    url: request.url,
+                    headers: Object.fromEntries(request.headers),
+                },
+            },
+            null,
+            4,
+        ),
+    );
+    return resp;
 }
 export async function Strict_Transport_Security(
-  ...[_request, _info, next]: Parameters<NextMiddleWare>
+    ...[_request, _info, next]: Parameters<NextMiddleWare>
 ): Promise<NextResponse> {
-  // console.log(2);
-  const response = await next();
-  const headers = new Headers(response.headers);
+    // console.log(2);
+    const response = await next();
+    const headers = new Headers(response.headers);
 
-  headers.set("Strict-Transport-Security", "max-age=31536000");
-  // console.log(ctx.response.body);
-  // 必须把响应的主体转换为Uint8Array才行
-  const body = response.body && (await bodyToBuffer(response.body));
-  // headers.delete("content-length");
-  const res = new NextResponse(body, {
-    status: response.status,
-    headers,
-  });
-  return res;
+    headers.set("Strict-Transport-Security", "max-age=31536000");
+    // console.log(ctx.response.body);
+    // 必须把响应的主体转换为Uint8Array才行
+    const body = response.body && (await bodyToBuffer(response.body));
+    // headers.delete("content-length");
+    const res = new NextResponse(body, {
+        status: response.status,
+        headers,
+    });
+    return res;
 }
 export async function bodyToBuffer(
-  body?: BodyInit | null,
+    body?: BodyInit | null,
 ): Promise<Uint8Array> {
-  return new Uint8Array(await new Response(body).arrayBuffer());
+    return new Uint8Array(await new Response(body).arrayBuffer());
 }
