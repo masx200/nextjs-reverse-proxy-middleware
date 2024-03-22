@@ -31,9 +31,9 @@ export async function middlewareMain(
     const requestHeaders = new Headers(request.headers);
     requestHeaders.append(
         "Forwarded",
-        `by=${request.nextUrl.host}; for=${
+        `by=${request.headers.get("x-forwarded-host")}; for=${
             request.headers.get("x-forwarded-for")
-        }; host=${request.nextUrl.host}; proto=${
+        }; host=${request.headers.get("x-forwarded-host")}; proto=${
             request.nextUrl.href.startsWith("https://") ? "https" : "http"
         }`,
     );
