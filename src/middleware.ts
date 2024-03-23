@@ -122,16 +122,29 @@ export async function reverse_proxy(
     request: NextRequest,
 ): Promise<NextResponse<unknown>> {
     try {
-        const response = await fetch(url, {
+        const req = new Request(url, {
             headers: requestHeaders,
             method: request.method,
-            body: request.body,
-            /* 关闭重定向 */
+            body: request.body, /* 关闭重定向 */
             /* 可以设定请求头中的字段"x-proxy-redirect"为"error" | "follow" |
 "manual"来设定代理行为的重定向方式. */
             redirect: (requestHeaders.get("x-proxy-redirect") ??
                 "manual") as RequestRedirect,
         });
+        console.log(
+            JSON.stringify(
+                {
+                    request: {
+                        method: req.method,
+                        url: req.url,
+                        headers: Object.fromEntries(req.headers),
+                    },
+                },
+                null,
+                4,
+            ),
+        );
+        const response = await fetch(req);
 
         return new NextResponse(response.body, {
             headers: response.headers,
